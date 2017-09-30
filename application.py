@@ -50,8 +50,15 @@ def delete_category(category_id):
     else:
         return render_template('delete_category.html', category = category)
 
+@app.route('/categories/<string:category_name>/', methods=['GET', 'POST'])
+def show_items(category_name):
+    categories = session.query(Category).order_by(asc(Category.name))
+    category = session.query(Category).filter_by(name = category_name).one()
+    items = session.query(Item).filter_by(category_id = category.id)
+    return render_template('categories.html', categories = categories, category = category, items = items)
+
 @app.route('/categories/<int:category_id>/new/', methods=['GET', 'POST'])
-def newItem():
+def newItem(category_id):
     pass
 
 @app.route('/categories/<int:category_id>/<int:item_id>/edit/', methods=['GET', 'POST'])

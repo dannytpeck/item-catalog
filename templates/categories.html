@@ -22,15 +22,32 @@
         {% endwith %}
       </div>
 
-      <a href="{{ url_for('new_category') }}">Add Category</a>
+      <div class="categories">
 
-      {% for category in categories %}
-        <p class="name">{{category.name}}</p>
-        <div class="editdeletepane">
-          <a href="{{ url_for('edit_category', category_id = category.id) }}">Edit</a>
-          <a href="{{ url_for('delete_category', category_id = category.id) }}">Delete</a>
+        <a href="{{ url_for('new_category') }}">Add Category</a>
+        
+        {% for category in categories %}
+          <p>
+            <a href="{{ url_for('show_items', category_name = category.name) }}">{{category.name}}</a>
+          </p>
+
+          <div>
+            <a href="{{ url_for('edit_category', category_id = category.id) }}">Edit</a>
+            <a href="{{ url_for('delete_category', category_id = category.id) }}">Delete</a>
+          </div>
+        {% endfor %}
+
+      </div>
+
+      {% if items %}
+        <div class="items">
+          <a href="#">Add Item</a>
+          <p>ITEMS</p>
+          {% for item in items %}
+            <p>{{item.name}}</p>
+          {% endfor %}
         </div>
-      {% endfor %}
+      {% endif %}
 
     </div>
 

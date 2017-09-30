@@ -1,3 +1,11 @@
 body {
   font-family: sans-serif;
 }
+
+.categories {
+  float: left;
+}
+
+.items {
+  margin-left: 20%;
+}
