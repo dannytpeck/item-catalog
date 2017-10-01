@@ -25,15 +25,15 @@
       <div class="categories">
 
         <a href="{{ url_for('new_category') }}">Add Category</a>
-        
+
         {% for category in categories %}
           <p>
             <a href="{{ url_for('show_items', category_name = category.name) }}">{{category.name}}</a>
           </p>
 
           <div>
-            <a href="{{ url_for('edit_category', category_id = category.id) }}">Edit</a>
-            <a href="{{ url_for('delete_category', category_id = category.id) }}">Delete</a>
+            <a href="{{ url_for('edit_category', category_name = category.name) }}">Edit</a>
+            <a href="{{ url_for('delete_category', category_name = category.name) }}">Delete</a>
           </div>
         {% endfor %}
 
@@ -41,10 +41,14 @@
 
       {% if items %}
         <div class="items">
-          <a href="#">Add Item</a>
-          <p>ITEMS</p>
+          <a href="{{ url_for('new_item', category_name = category.name) }}">Add Item</a>
           {% for item in items %}
             <p>{{item.name}}</p>
+
+            <div>
+              <a href="{{ url_for('edit_item', category_name = category.name, item_name = item.name) }}">Edit</a>
+              <a href="{{ url_for('delete_item', category_name = category.name, item_name = item.name) }}">Delete</a>
+            </div>
           {% endfor %}
         </div>
       {% endif %}
