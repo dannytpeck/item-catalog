@@ -244,11 +244,20 @@ def new_item(category_name):
     category = session.query(Category).filter_by(name = category_name).one()
     if request.method == 'POST':
         item = Item(name = request.form['name'], category_id = category.id)
+        if request.form['description']:
+            item.description = request.form['description']
         session.add(item)
         session.commit()
         return redirect(url_for('show_items', category_name = category_name))
     else:
         return render_template('new_item.html', category_name = category_name)
+
+
+# Show one item's name and description
+@app.route('/categories/<string:category_name>/<string:item_name>/')
+def show_item(category_name, item_name):
+    item = session.query(Item).filter_by(name = item_name).one()
+    return render_template('item.html', category_name = category_name, item = item)
 
 
 # Edit an existing item
@@ -260,6 +269,8 @@ def edit_item(category_name, item_name):
     if request.method == 'POST':
         if request.form['name']:
             item.name = request.form['name']
+        if request.form['description']:
+            item.description = request.form['description']
         session.add(item)
         session.commit()
         return redirect(url_for('show_items', category_name = category_name))
