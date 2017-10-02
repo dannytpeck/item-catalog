@@ -15,3 +15,10 @@ body {
 a.name {
   color: inherit;
 }
+
+.flash ul {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 0.5em;
+  color: #bd2130;
+}
