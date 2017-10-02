@@ -7,10 +7,10 @@ and the item descriptions.
 Follow these steps to get started:
 
 ```
-	> git clone https://github.com/dannytpeck/item-catalog
-	> cd item-catalog
+  > git clone https://github.com/dannytpeck/item-catalog
+  > cd item-catalog
   > pip install flask sqlalchemy oauth2client
-	> python application.py
+  > python application.py
 ```
 
 ### Changing the port
