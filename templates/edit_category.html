@@ -1,15 +1,15 @@
-<html>
-  <body>
+{% extends "main.html" %}
+{% block content %}
+  {% include "header.html" %}
 
-    <h1>Edit Category</h1>
+  <h1>Edit Category</h1>
 
-    <form action="#" method="post">
-      <p>Name:</p>
-      <input type="text" name="name" placeholder="{{category.name}}">
-      <input type="submit" value="Edit">
-    </form>
+  <form action="#" method="post">
+    <p>Name:</p>
+    <input type="text" name="name" placeholder="{{category.name}}">
+    <input type="submit" value="Edit">
+  </form>
 
-    <a href="{{ url_for('show_categories') }}">Cancel</a>
+  <a href="{{ url_for('show_categories') }}">Cancel</a>
 
-  </body>
-</html>
+{% endblock %}
