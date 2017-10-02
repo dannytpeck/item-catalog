@@ -18,7 +18,7 @@ app = Flask(__name__)
 
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
-APPLICATION_NAME = "Restaurant Menu Application"
+APPLICATION_NAME = "Item Catalog Application"
 
 # Connect to Database and create database session
 engine = create_engine('sqlite:///itemlist.db')
@@ -115,8 +115,6 @@ def gconnect():
     output += '<h1>Welcome, '
     output += login_session['username']
     output += '!</h1>'
-    output += '<img src="'
-    output += login_session['picture']
     print "done!"
     return output
 
@@ -130,16 +128,11 @@ def gdisconnect():
         response = make_response(
             json.dumps('Current user not connected.'), 401)
         response.headers['Content-Type'] = 'application/json'
-        return redirect('/')
-    print 'In gdisconnect access token is %s', access_token
-    print 'User name is: '
-    print login_session['username']
+        return response
     url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' \
         % login_session['access_token']
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
-    print 'result is '
-    print result
     if result['status'] == '200':
         del login_session['access_token']
         del login_session['gplus_id']
@@ -153,7 +146,7 @@ def gdisconnect():
         response = make_response(
             json.dumps('Failed to revoke token for given user.', 400))
         response.headers['Content-Type'] = 'application/json'
-        return redirect('/')
+        return response
 
 
 # JSON API to view all Categories
