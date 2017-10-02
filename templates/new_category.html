@@ -1,15 +1,15 @@
 {% extends "main.html" %}
 {% block content %}
-  {% include "header.html" %}
 
-  <h1>New Category</h1>
+  <h1 class="my-3">New Category</h1>
 
-  <form action="#" method="post">
-    <p>Name:</p>
-    <input type="text" name="name">
-    <input type="submit" value="Create">
+  <form action="{{ url_for('new_category')}}" method="post">
+    <div class="form-group">
+      <label for="category-name">Name</label>
+      <input type="text" name="name" class="form-control" id="category-name">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
   </form>
-
-  <a href="{{ url_for('show_categories') }}">Cancel</a>
 
 {% endblock %}

@@ -1,13 +1,12 @@
 {% extends "main.html" %}
 {% block content %}
-  {% include "header.html" %}
 
-  <h1>Are you sure you want to delete {{ item.name }}</h1>
+  <h1 class="my-3">Delete Item</h1>
+
+  <p>Are you sure you want to delete {{ item.name }}?</p>
 
   <form action="{{ url_for('delete_item', category_name = category_name, item_name = item.name) }}" method="post">
-    <input type="submit" value="Delete">
+    <button type="submit" class="btn btn-primary">Delete</button>
   </form>
-
-  <a href="{{ url_for('show_items', category_name = category_name) }}">Cancel</a>
 
 {% endblock %}
