@@ -7,5 +7,10 @@ body {
 }
 
 .items {
+  float: left;
   margin-left: 20%;
+}
+
+.category, .item {
+  padding: 10px;
 }
