@@ -3,7 +3,8 @@ from flask import Flask, render_template, request, redirect, jsonify, url_for
 from flask import flash, make_response
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Category, Item
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from database_setup import Base, Category, Item, User
 
 from flask import session as login_session
 import random
@@ -13,6 +14,8 @@ from oauth2client.client import FlowExchangeError
 import httplib2
 import json
 import requests
+
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -26,6 +29,15 @@ Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in login_session:
+            return redirect(url_for('show_login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 # Create anti-forgery state token
@@ -111,12 +123,44 @@ def gconnect():
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
 
+    # See if user exists, if it doesn't make a new one
+    user_id = get_user_id(data["email"])
+    if not user_id:
+        user_id = create_user(login_session)
+    login_session['user_id'] = user_id
+
     output = ''
     output += '<h1>Welcome, '
     output += login_session['username']
     output += '!</h1>'
     print "done!"
     return output
+
+
+# Create a new user
+def create_user(login_session):
+    new_user = User(name=login_session['username'],
+                    email=login_session['email'],
+                    picture=login_session['picture'])
+    session.add(new_user)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
+
+
+# Return a user by id
+def get_user_info(user_id):
+    user = session.query(User).filter_by(id=user_id).one()
+    return user
+
+
+# Return a user ID by email
+def get_user_id(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except NoResultFound:
+        return None
 
 
 # Disconnect from google, revoke a current user's token, reset login_session
@@ -181,11 +225,11 @@ def show_categories():
 
 # Create a new category
 @app.route('/categories/new/', methods=['GET', 'POST'])
+@login_required
 def new_category():
-    if 'username' not in login_session:
-        return redirect('/login')
     if request.method == 'POST':
-        new_category = Category(name=request.form['name'])
+        new_category = Category(name=request.form['name'],
+                                user_id=login_session['user_id'])
         session.add(new_category)
         session.commit()
         return redirect(url_for('show_categories'))
@@ -195,10 +239,13 @@ def new_category():
 
 # Edit an existing category
 @app.route('/categories/<string:category_name>/edit/', methods=['GET', 'POST'])
+@login_required
 def edit_category(category_name):
-    if 'username' not in login_session:
-        return redirect('/login')
     category = session.query(Category).filter_by(name=category_name).one()
+    creator = get_user_info(category.user_id)
+    if (creator.id != login_session['user_id']):
+        flash('Only the original creator can edit this category.')
+        return redirect(url_for('show_categories'))
     if request.method == 'POST':
         if request.form['name']:
             category.name = request.form['name']
@@ -212,10 +259,13 @@ def edit_category(category_name):
 # Delete an existing category
 @app.route(
     '/categories/<string:category_name>/delete/', methods=['GET', 'POST'])
+@login_required
 def delete_category(category_name):
-    if 'username' not in login_session:
-        return redirect('/login')
     category = session.query(Category).filter_by(name=category_name).one()
+    creator = get_user_info(category.user_id)
+    if (creator.id != login_session['user_id']):
+        flash('Only the original creator can delete this category.')
+        return redirect(url_for('show_categories'))
     if request.method == 'POST':
         session.delete(category)
         session.commit()
@@ -237,12 +287,13 @@ def show_items(category_name):
 
 # Add a new item to a category
 @app.route('/categories/<string:category_name>/new/', methods=['GET', 'POST'])
+@login_required
 def new_item(category_name):
-    if 'username' not in login_session:
-        return redirect('/login')
     category = session.query(Category).filter_by(name=category_name).one()
     if request.method == 'POST':
-        item = Item(name=request.form['name'], category_id=category.id)
+        item = Item(name=request.form['name'],
+                    category_id=category.id,
+                    user_id=login_session['user_id'])
         if request.form['description']:
             item.description = request.form['description']
         session.add(item)
@@ -252,20 +303,16 @@ def new_item(category_name):
         return render_template('new_item.html', category_name=category_name)
 
 
-# Show one item's name and description
-@app.route('/categories/<string:category_name>/<string:item_name>/')
-def show_item(category_name, item_name):
-    item = session.query(Item).filter_by(name=item_name).one()
-    return render_template('item.html', category_name=category_name, item=item)
-
-
 # Edit an existing item
 @app.route('/categories/<string:category_name>/<string:item_name>/edit/',
            methods=['GET', 'POST'])
+@login_required
 def edit_item(category_name, item_name):
-    if 'username' not in login_session:
-        return redirect('/login')
     item = session.query(Item).filter_by(name=item_name).one()
+    creator = get_user_info(item.user_id)
+    if (creator.id != login_session['user_id']):
+        flash('Only the original creator can edit this item.')
+        return redirect(url_for('show_items', category_name=category_name))
     if request.method == 'POST':
         if request.form['name']:
             item.name = request.form['name']
@@ -282,10 +329,13 @@ def edit_item(category_name, item_name):
 # Delete an existing item
 @app.route('/categories/<string:category_name>/<string:item_name>/delete/',
            methods=['GET', 'POST'])
+@login_required
 def delete_item(category_name, item_name):
-    if 'username' not in login_session:
-        return redirect('/login')
     item = session.query(Item).filter_by(name=item_name).one()
+    creator = get_user_info(item.user_id)
+    if (creator.id != login_session['user_id']):
+        flash('Only the original creator can delete this item.')
+        return redirect(url_for('show_items', category_name=category_name))
     if request.method == 'POST':
         session.delete(item)
         session.commit()
@@ -293,6 +343,13 @@ def delete_item(category_name, item_name):
     else:
         return render_template('delete_item.html', category_name=category_name,
                                item=item)
+
+
+# Show one item's name and description
+@app.route('/categories/<string:category_name>/<string:item_name>/')
+def show_item(category_name, item_name):
+    item = session.query(Item).filter_by(name=item_name).one()
+    return render_template('item.html', category_name=category_name, item=item)
 
 
 if __name__ == '__main__':
